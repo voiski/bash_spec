@@ -40,6 +40,7 @@ function find_method(){
     eval "map_keys=(\"\${!$1[@]}\")"
     eval "map_values=(\"\${$1[@]}\")"
     shift
+    unset step_value step_method
     key_with_values=$*
     for i in "${!map_keys[@]}"; do
         if [[ ${key_with_values} =~ ${map_keys[$i]} ]]
@@ -79,7 +80,7 @@ function Given(){
     [ -z $SKIP_TEST ] || return
     find_method GIVEN_MAP $*
     ! $test_fail && $step_method $step_value
-    echo_result "$?" "GIVEN I have $*"
+    echo_result "$?" "GIVEN $*"
 }
 
 declare -A WHEN_MAP
@@ -108,6 +109,11 @@ function Then(){
 GIVEN_MAP["I have (.*)"]=Given_I_have
 Given_I_have(){
     eval $*
+}
+
+GIVEN_MAP["I run (.*)"]=Given_I_Run
+Given_I_Run(){
+    eval $* >/dev/null
 }
 
 WHEN_MAP["I use with the arguments (.*)"]=When_I_use_with_the_arguments
