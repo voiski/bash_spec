@@ -72,6 +72,48 @@ It is just a initial and very generic steps, each one will basically evaluate th
 * **Then**
   * `It should be valid '(.*)'` evaluate the content in the regex group `(.*)`.
 
+## Background
+
+Background is a usefull feature that enables your scenarios to have a background base scenario. The background steps will run before each scenario. To use it, override the `Background`.
+
+```bash
+Background() {
+    Given I have 'BRANCH=master'
+    When I run
+}
+
+Describe mehod_1
+    Then It should be valid '[ -f result.method_1.file ]'
+
+Describe mehod_2
+    Then It should be valid '[ -f result.method_2.file ]'
+```
+
+## Table of Contents
+
+Another BDD feature to improve reuse of code. Here you can write a scenario and define placeholders as normally you do with functions. The principe is simple, you override the `Table` function and make use of it with the `Row` function.
+
+```bash
+Table() {
+    When I use with the arguments $1
+    Then It should be valid "[ $ACTION = ${2:-$1} ]"
+}
+
+Row 'build' 
+Row 'b' 'build'
+Row 'validate'
+Row 'v' 'validate'
+```
+
+## Skip scenarios
+
+You can skip a number of scenarios in order to resume from failing scenarios for example. Or if you are adding a new one and you want to run from there.
+```bash
+export SKIP_TEST=12
+bash my_bash_test.sh
+```
+
+> It times it fails, it prints the scenario number: `--Error! THEN It should be valid somehing (test 14)`
 
 # How To extend?
 
