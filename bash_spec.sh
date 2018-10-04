@@ -71,7 +71,7 @@ function echo_result(){
         then echo "  ${green}$*${reset}"
     elif $test_fail
         then echo "${gray}  $* SKIP!${reset}"
-        else echo "${red}--Error! $*${reset} (test $test_cout)"
+        else echo "${red}--Error! $*${reset} (test $(($test_cout-1)))"
              [ -z "${error_detail}" ] || echo "${red}Detail: ${error_detail}${reset}"
              unset error_detail
              test_fail=true
@@ -91,6 +91,13 @@ function Describe(){
     current_method=$1
     echo
     echo "${blue}> Describe ${current_method}${reset}"
+    # redefine
+    function Background(){
+        true
+    }
+    function Table(){
+        true
+    }
 }
 
 declare -A GIVEN_MAP
