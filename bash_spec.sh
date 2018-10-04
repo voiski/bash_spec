@@ -16,24 +16,37 @@ blue=`tput setaf 4`
 gray=`tput setaf 8`
 reset=`tput sgr0`
 
-test_cout=0
+test_cout=1
 last_bdd_action=none
 
 # Support methods
 ########
 
 function init_test(){
-    echo
     test_fail=false
     init_script_data
     ((test_cout++))
     if [ ! -z $SKIP_TEST ] && [[ $SKIP_TEST -lt $test_cout ]]
     then unset SKIP_TEST
     fi
+    [ ! -z $SKIP_TEST ] && return || true
+    echo
+    last_bdd_action=given # to force skip init in step actions
+    Background
 }
 
 function init_script_data(){
     echo "Please override!!!"
+}
+
+function Background(){
+    true
+}
+function Table(){
+    true
+}
+function Row(){
+    Table $*
 }
 
 function find_method(){
@@ -59,8 +72,15 @@ function echo_result(){
     elif $test_fail
         then echo "${gray}  $* SKIP!${reset}"
         else echo "${red}--Error! $*${reset} (test $test_cout)"
+             [ -z "${error_detail}" ] || echo "${red}Detail: ${error_detail}${reset}"
+             unset error_detail
              test_fail=true
     fi
+}
+
+function log_error_detail(){
+    error_detail=$*
+    false
 }
 
 # Verbs handlers
@@ -95,6 +115,7 @@ function When(){
 
 declare -A THEN_MAP
 function Then(){
+    [ "$last_bdd_action" == 'describe' ] && init_test || true
     last_bdd_action=then
     [ -z $SKIP_TEST ] || return
     find_method THEN_MAP $*
@@ -109,11 +130,13 @@ function Then(){
 GIVEN_MAP["I have (.*)"]=Given_I_have
 Given_I_have(){
     eval $*
+    [ $? -eq 0 ] || log_error_detail $(eval echo $*)
 }
 
 GIVEN_MAP["I run (.*)"]=Given_I_Run
 Given_I_Run(){
     eval $* >/dev/null
+    [ $? -eq 0 ] || log_error_detail $(eval echo $*)
 }
 
 WHEN_MAP["I use with the arguments (.*)"]=When_I_use_with_the_arguments
@@ -130,4 +153,5 @@ When_I_use_without_arguments(){
 THEN_MAP["It should be valid (.*)"]=Then_It_Should_be_valid
 Then_It_Should_be_valid(){
     eval $*
+    [ $? -eq 0 ] || log_error_detail $(eval echo $*)
 }
