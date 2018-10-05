@@ -8,13 +8,26 @@
 #     then It should be valid $string_validation_to_be_evaluated
 #
 
+trap finish EXIT
+step_fail=0
+step_ok=0
+step_skip=0
+finish(){
+    echo "Total of ${test_cout} scenarios
+    steps ok=${green}${step_ok}${reset}/fail=${red}${step_fail}${reset}/skip=${gray}${step_skip}${reset}"
+    if [ $step_fail -gt 0 ];then 
+        echo "${red}We have failing scenarios ${reset}"
+        exit -1 
+    fi
+    echo "${green}All Green =D${reset}"
+}
 
 #colors
-red=`tput setaf 1`
-green=`tput setaf 2`
-blue=`tput setaf 4`
-gray=`tput setaf 8`
-reset=`tput sgr0`
+red=$(printf '\e[31m')
+green=$(printf '\e[32m')
+blue=$(printf '\e[34m')
+gray=$(printf '\e[90m')
+reset=$(printf '\e[39m')
 
 test_cout=1
 last_bdd_action=none
@@ -67,14 +80,18 @@ function find_method(){
 
 function echo_result(){
     result=$1;shift
-    if [ "$result" == "true" ] || [ "$result" == "0" ]
-        then echo "  ${green}$*${reset}"
-    elif $test_fail
-        then echo "${gray}  $* SKIP!${reset}"
-        else echo "${red}--Error! $*${reset} (test $(($test_cout-1)))"
-             [ -z "${error_detail}" ] || echo "${red}Detail: ${error_detail}${reset}"
-             unset error_detail
-             test_fail=true
+    if [ "$result" == "true" ] || [ "$result" == "0" ];then 
+        echo "  ${green}$*${reset}"
+        ((step_ok++))
+    elif $test_fail;then
+        echo "${gray}  $* SKIP!${reset}"
+        ((step_skip++))
+    else
+        echo "${red}--Error! $*${reset} (test $(($test_cout-1)))"
+        [ -z "${error_detail}" ] || echo "${red}Detail: ${error_detail}${reset}"
+        unset error_detail
+        test_fail=true
+        ((step_fail++))
     fi
 }
 
