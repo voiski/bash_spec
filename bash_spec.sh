@@ -9,11 +9,12 @@
 #
 
 trap finish EXIT
+test_total=0
 step_fail=0
 step_ok=0
 step_skip=0
 finish(){
-    echo "Total of ${test_cout} scenarios
+    echo "Total of ${test_total} scenarios
     steps ok=${green}${step_ok}${reset}/fail=${red}${step_fail}${reset}/skip=${gray}${step_skip}${reset}"
     if [ $step_fail -gt 0 ];then 
         echo "${red}We have failing scenarios ${reset}"
@@ -29,7 +30,7 @@ blue=$(printf '\e[34m')
 gray=$(printf '\e[90m')
 reset=$(printf '\e[39m')
 
-test_cout=1
+test_cout=0
 last_bdd_action=none
 
 # Support methods
@@ -38,12 +39,20 @@ last_bdd_action=none
 function init_test(){
     test_fail=false
     init_script_data
+    if [ ! -z $ONLY_TEST ];then
+        STOP_AT_TEST=$ONLY_TEST
+        SKIP_TEST=$((ONLY_TEST-1))
+    fi
+    if [ ! -z $STOP_AT_TEST ] && [[ $STOP_AT_TEST -eq $test_cout ]]
+    then exit 0
+    fi
     ((test_cout++))
     if [ ! -z $SKIP_TEST ] && [[ $SKIP_TEST -lt $test_cout ]]
     then unset SKIP_TEST
     fi
-    [ ! -z $SKIP_TEST ] && return || true
+    [ ! -z $SKIP_TEST ] && return || ((test_total++))
     echo
+    echo "${gray}-- Test ${test_cout} ${reset}"
     last_bdd_action=given # to force skip init in step actions
     Background
 }
@@ -87,7 +96,7 @@ function echo_result(){
         echo "${gray}  $* SKIP!${reset}"
         ((step_skip++))
     else
-        echo "${red}--Error! $*${reset} (test $(($test_cout-1)))"
+        echo "${red}--Error! $*${reset} (test ${test_cout})"
         [ -z "${error_detail}" ] || echo "${red}Detail: ${error_detail}${reset}"
         unset error_detail
         test_fail=true
